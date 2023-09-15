@@ -46,8 +46,8 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        mv mynewbook/_build/html/* doc/
-        git add doc/
+        mv mynewbook/_build/html/* docs/
+        git add docs/
         git commit -m "Update Jupyter Book in doc folder" || echo "No changes to commit"
         git push
 
@@ -56,4 +56,4 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3.6.1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./doc
+        publish_dir: ./docs
