@@ -1,49 +1,66 @@
 name: Compile and Deploy Jupyter Book to GitHub Pages
 
-# Only run this when the master branch changes
 on:
   push:
-    branches:
-    - main
-    # If your git repository has the Jupyter Book within some-subfolder next to
-    # unrelated files, you can make this run only if a file within that specific
-    # folder has been modified.
-    #
+    branches: ["main"]
     paths:
-    - mynewbook/**
+    - 'mynewbook/**'
+  workflow_dispatch:
 
-# This job installs dependencies, builds the book, and pushes it to `gh-pages`
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  deploy-book:
+  compile-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    # 2. Checkout the repository
+    - name: Checkout
+      uses: actions/checkout@v2
 
-    # Install dependencies
+    # 3. Install Python 3.11
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
         python-version: 3.11
 
+    # 4. Install dependencies
     - name: Install dependencies
       run: |
         pip install -U jupyter-book
-        pip install matplotlib
-        pip install numpy
 
-    # Build the book
+    # 5. Build the Jupyter Book from the mynewbook folder
     - name: Build the book
       run: |
         jupyter-book build mynewbook
-        
-    - name: Set git user
-      run: |
-        git config user.name "bobqianic"
-        git config user.email "129547291+bobqianic@users.noreply.github.com"
 
-    # Push the book's HTML to github-pages
-    - name: GitHub Pages action
-      uses: peaceiris/actions-gh-pages@v3.6.1
+    # 6. Commit the built book to a new branch
+    - name: Commit to a new branch and push
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        rm -rf docs/*
+        mv mynewbook/_build/html/* docs/
+        git checkout -b update-jupyter-book-$(date +'%Y%m%d%H%M%S')
+        git add docs/
+        git commit -m "Update Jupyter Book in doc folder" || echo "No changes to commit"
+        git push origin HEAD
+
+    # 7. Create a pull request to merge changes to main branch
+    - name: Create Pull Request
+      uses: repo-sync/pull-request@v2
       with:
-        github_token: ${{ secrets.PUSH_PAGES }}
-        publish_dir: mynewbook/_build/html
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        destination_branch: "main"
+        pr_title: "Update Jupyter Book"
+        pr_body: "This PR updates the Jupyter Book in the `docs` folder."
+        pr_label: "jupyter-book-update"
+
+    # 8. Optionally, if you wish to auto-merge the PR, you can use an action for that.
+    # But be cautious, as this could potentially bypass some important checks.
