@@ -53,7 +53,7 @@ jobs:
         mv mynewbook/_build/html/* docs/
         git add docs/
         git commit -m "Update Jupyter Book in doc folder" || echo "No changes to commit"
-        git push
+        git push https://${GITHUB_TOKEN}@github.com/bobqianic/whispercpp_wiki.git
 
     # 7. Deploy the doc folder to GitHub Pages
     - name: Deploy to GitHub Pages
