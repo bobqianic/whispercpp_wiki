@@ -1,46 +1,59 @@
-name: deploy-and-convert-book
+name: Compile and Deploy Jupyter Book to GitHub Pages
 
-permissions: write-all
-
-# Only run this when the master branch changes
 on:
+  # Runs on pushes targeting the main branch
   push:
-    branches:
-    - main
-    - master
+    branches: ["main"]
     paths:
-    - mynewbook/**
+    - 'mynewbook/**'
+  workflow_dispatch:
 
-# This job installs dependencies, builds the book, and pushes it to `gh-pages`
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  deploy-book:
+  compile-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    # 2. Checkout the repository
+    - name: Checkout
+      uses: actions/checkout@v2
 
-    # Install dependencies
+    # 3. Install Python 3.11
     - name: Set up Python 3.11
       uses: actions/setup-python@v2
       with:
         python-version: 3.11
 
+    # 4. Install dependencies
     - name: Install dependencies
       run: |
         pip install -U jupyter-book
 
-    # Build the book
+    # 5. Build the Jupyter Book from the mynewbook folder
     - name: Build the book
       run: |
-        jupyter-book build mynewbook/
+        jupyter-book build mynewbook
 
-    - name: Copy built content to docs
+    # 6. Commit the built book to the doc folder
+    - name: Commit and push the built book
       run: |
-        rsync -av mynewbook/_build/html/ ./docs/
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        mv _build/html/* doc/
+        git add doc/
+        git commit -m "Update Jupyter Book in doc folder" || echo "No changes to commit"
+        git push
 
-    # Push the book's HTML to github-pages
-    - name: GitHub Pages action
+    # 7. Deploy the doc folder to GitHub Pages
+    - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3.6.1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_branch: main
-        publish_dir: ./docs/
+        publish_dir: ./doc
