@@ -1,4 +1,4 @@
-# Welcome to your Jupyter Book (whisper.cpp demo2)
+# Welcome to your Jupyter Book (whisper.cpp demo3)
 
 This is a small sample book to give you a feel for how book content is
 structured.
