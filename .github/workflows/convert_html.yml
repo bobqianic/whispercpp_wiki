@@ -1,7 +1,6 @@
 name: deploy-and-convert-book
 
-permissions:
-  pages: write
+permissions: write-all
 
 # Only run this when the master branch changes
 on:
