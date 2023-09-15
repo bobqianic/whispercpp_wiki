@@ -1,5 +1,8 @@
 name: Compile and Deploy Jupyter Book to GitHub Pages
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 on:
   # Runs on pushes targeting the main branch
   push:
@@ -58,3 +61,4 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs
+        cname: whispercpp.org
