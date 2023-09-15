@@ -32,6 +32,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -U jupyter-book
+        pip install matplotlib
+        pip install numpy
 
     # 5. Build the Jupyter Book from the mynewbook folder
     - name: Build the book
