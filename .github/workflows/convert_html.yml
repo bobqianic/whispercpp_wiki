@@ -1,10 +1,6 @@
 name: Compile and Deploy Jupyter Book to GitHub Pages
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 on:
-  # Runs on pushes targeting the main branch
   push:
     branches: ["main"]
     paths:
@@ -44,21 +40,24 @@ jobs:
       run: |
         jupyter-book build mynewbook
 
-    # 6. Commit the built book to the doc folder
-    - name: Commit and push the built book
+    # 6. Commit the built book to a new branch
+    - name: Commit to a new branch and push
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         rm -rf docs/*
         mv mynewbook/_build/html/* docs/
+        git checkout -b update-jupyter-book-$(date +'%Y%m%d%H%M%S')
         git add docs/
         git commit -m "Update Jupyter Book in doc folder" || echo "No changes to commit"
-        git push https://${GITHUB_TOKEN}@github.com/bobqianic/whispercpp_wiki.git
+        git push origin HEAD
 
-    # 7. Deploy the doc folder to GitHub Pages
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3.6.1
+    # 7. Create a pull request to merge changes to main branch
+    - name: Create Pull Request
+      uses: repo-sync/pull-request@v2
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs
-        cname: whispercpp.org
+        destination_branch: "main"
+        pr_title: "Update Jupyter Book"
+        pr_body: "This PR updates the Jupyter Book in the `docs` folder."
+        pr_label: "jupyter-book-update"
