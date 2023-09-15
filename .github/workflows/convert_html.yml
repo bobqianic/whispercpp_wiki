@@ -1,16 +1,14 @@
 name: Compile and Deploy Jupyter Book to GitHub Pages
 
+permissions: write-all
+
 on:
+  # Runs on pushes targeting the main branch
   push:
     branches: ["main"]
     paths:
     - 'mynewbook/**'
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages"
@@ -40,27 +38,19 @@ jobs:
       run: |
         jupyter-book build mynewbook
 
-    # 6. Commit the built book to a new branch
-    - name: Commit to a new branch and push
+    # 6. Commit the built book to the doc folder
+    - name: Commit and push the built book
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        rm -rf docs/*
         mv mynewbook/_build/html/* docs/
-        git checkout -b update-jupyter-book-$(date +'%Y%m%d%H%M%S')
         git add docs/
         git commit -m "Update Jupyter Book in doc folder" || echo "No changes to commit"
-        git push origin HEAD
+        git push
 
-    # 7. Create a pull request to merge changes to main branch
-    - name: Create Pull Request
-      uses: repo-sync/pull-request@v2
+    # 7. Deploy the doc folder to GitHub Pages
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3.6.1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        destination_branch: "main"
-        pr_title: "Update Jupyter Book"
-        pr_body: "This PR updates the Jupyter Book in the `docs` folder."
-        pr_label: "jupyter-book-update"
-
-    # 8. Optionally, if you wish to auto-merge the PR, you can use an action for that.
-    # But be cautious, as this could potentially bypass some important checks.
+        publish_dir: docs
